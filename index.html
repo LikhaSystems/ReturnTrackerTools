@@ -188,7 +188,7 @@
     </main>
     
 
-    <script>
+<script>
         // CONFIGURATION
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYQSm8OA4TpCJ28gTgSFDncN1n53wQL9qYERd6n9o1WEp-rS-oExSFdnHuw6utHc9O5g/exec';
         
@@ -196,9 +196,12 @@
         let scannedData = []; 
         let chartInstance = null;
 
-        // Initialize Date
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('reportDateDisplay').textContent = today;
+        // Initialize Date Input to Today
+        const dateInput = document.getElementById('reportDateInput');
+        dateInput.value = new Date().toISOString().split('T')[0];
+        
+        // Refresh UI if date changes manually
+        dateInput.addEventListener('change', updateUI);
 
         // --- Data Input Handling ---
         document.getElementById('fileInput').addEventListener('change', function(e) {
@@ -228,8 +231,7 @@
                     id: sid,
                     colB: b || 'N/A',
                     colC: c || 'N/A',
-                    colE: e || 'N/A',
-                    date: today
+                    colE: e || 'N/A'
                 });
             }
         }
@@ -250,7 +252,7 @@
             val.split('\n').forEach(line => {
                 const id = line.trim();
                 if (id && !scannedData.some(s => s.id === id)) {
-                    scannedData.push({ id: id, timestamp: now.toLocaleTimeString(), date: today });
+                    scannedData.push({ id: id, timestamp: now.toLocaleTimeString() });
                 }
             });
             document.getElementById('scanInput').value = '';
@@ -270,7 +272,6 @@
             document.getElementById('m-totalMissing').textContent = missing.length;
             document.getElementById('m-totalWrong').textContent = wrong.length;
 
-            // Render Missing Table
             const mBody = document.getElementById('missingTableBody');
             mBody.innerHTML = missing.map(d => `
                 <tr>
@@ -279,7 +280,6 @@
                 </tr>
             `).join('') || '<tr><td colspan="4" style="text-align:center">All items accounted for!</td></tr>';
 
-            // Render Wrong Table
             const wBody = document.getElementById('wrongTableBody');
             wBody.innerHTML = wrong.map(d => `
                 <tr>
@@ -289,14 +289,15 @@
             `).join('') || '<tr><td colspan="3" style="text-align:center">No mismatches detected.</td></tr>';
 
             updateSummary(missing.length, wrong.length);
-            renderChart(missing.length, wrong.length);
+            renderChart();
         }
 
         function updateSummary(mCount, wCount) {
             const sBody = document.getElementById('summaryTableBody');
+            const selectedDate = document.getElementById('reportDateInput').value;
             sBody.innerHTML = `
                 <tr>
-                    <td><strong>${today}</strong></td>
+                    <td><strong>${selectedDate}</strong></td>
                     <td>${jntData.length}</td>
                     <td>${scannedData.length}</td>
                     <td style="color:var(--danger)">${mCount}</td>
@@ -330,41 +331,42 @@
 
         // --- Export to Google Sheets ---
         async function syncDataToSheets() {
-            if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-                alert("Please add your Google Apps Script URL to the code first!");
-                return;
-            }
+    if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_GOOGLE')) {
+        alert("Please check your Google Apps Script URL.");
+        return;
+    }
 
-            const jntIds = jntData.map(d => d.id);
-            const wrongItems = scannedData.filter(d => !jntIds.includes(d.id));
+    const selectedDate = document.getElementById('reportDateInput').value;
+    const jntIds = jntData.map(d => d.id);
+    const wrongItems = scannedData.filter(d => !jntIds.includes(d.id));
 
-            const payload = {
-                action: 'saveAllLogs',
-                data: {
-                    reportDate: today,
-                    jnt: jntData,
-                    scanned: scannedData,
-                    wrong: wrongItems
-                }
-            };
+    const payload = {
+        action: 'saveAllLogs',
+        reportDate: selectedDate,
+        jnt: jntData,
+        scanned: scannedData,
+        wrong: wrongItems
+    };
 
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                alert(`✅ Success! Data for ${today} exported to Google Sheets.`);
-            } catch (error) {
-                console.error('Sync Error:', error);
-                alert("❌ Sync failed. Check console for details.");
-            }
-        }
+    try {
+        // We use the regular fetch. 
+        // Note: Google Apps Script will always return a CORS error on POST 
+        // even if it succeeds, unless you handle the response as JSONP or similar.
+        // However, the data WILL reach the sheet.
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        
+        alert(`✅ Sync Triggered! Please check your Google Sheet for ${selectedDate}.`);
+    } catch (error) {
+        console.error('Sync Error:', error);
+        alert("❌ Sync failed. Check console.");
+    }
+}
 
         // Initial UI Load
         updateUI();
-        
     </script>
 </body>
 </html>
