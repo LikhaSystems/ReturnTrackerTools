@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J&T Returns Tracking System Pro</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --sidebar-bg: #1e293b;
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --danger: #ef4444; /* Missing */
+            --success: #10b981; /* Matched */
+            --wrong: #991b1b;   /* Wrong Item */
+            --border-color: #e2e8f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Sidebar */
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 24px; font-size: 20px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header span { color: #60a5fa; }
+        .nav-menu { list-style: none; padding: 20px 12px; }
+        .nav-item { padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: 500; }
+        .nav-item.active { background-color: var(--primary); color: white; }
+
+        /* Main Content */
+        .main-content { flex-grow: 1; overflow-y: auto; padding: 30px 40px; }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .page-title { font-size: 28px; font-weight: 700; }
+
+        /* Metrics */
+        .metrics-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .metric-box { background: var(--card-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .metric-label { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 8px; }
+        .metric-value { font-size: 32px; font-weight: 700; }
+
+        /* Cards */
+        .card { background: var(--card-bg); border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 1px solid var(--border-color); }
+        .card h2 { font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        textarea { width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 12px; font-family: monospace; resize: vertical; }
+        
+        button { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; background: var(--primary); color: white; transition: 0.2s; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background: #e2e8f0; color: var(--text-main); margin-left: 8px; }
+        .btn-sync { background: #059669; display: inline-flex; align-items: center; gap: 8px; }
+        
+        /* Tables */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+        th { background: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
+
+        /* Badges */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; color: white; text-transform: uppercase; }
+        .badge-missing { background: var(--danger); }
+        .badge-wrong { background: var(--wrong); }
+        
+        .upload-area { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 30px; text-align: center; background: #f8fafc; cursor: pointer; margin-bottom: 15px; transition: 0.2s; }
+        .upload-area:hover { border-color: var(--primary); background: #f1f5f9; }
+        .chart-container { height: 350px; }
+        
+        #reportDateDisplay { font-weight: 700; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">Likha <span>Tools </span></div>
+        <ul class="nav-menu">
+            <li class="nav-item active">📊 Return Tally</li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+       <div class="header-flex">
+    <h1 class="page-title">Returns Tracking Dashboard</h1>
+    
+</div>
+
+        <div class="metrics-container">
+            <div class="metric-box">
+                <div class="metric-label">Total J&T Returns</div>
+                <div class="metric-value" id="m-totalJnt" style="color: var(--primary)">0</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Warehouse Scanned</div>
+                <div class="metric-value" id="m-totalScanned">0</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">⚠️ Missing</div>
+                <div class="metric-value" id="m-totalMissing" style="color: var(--danger)">0</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">❌ Wrong Items</div>
+                <div class="metric-value" id="m-totalWrong" style="color: var(--wrong)">0</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div class="card">
+                <h2>📥 J&T Returns Input</h2>
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <p><strong>Click to Upload Excel Manifest</strong></p>
+                    <p style="font-size: 12px; color: #64748b;">(Columns B, C, E supported)</p>
+                    <input type="file" id="fileInput" hidden multiple accept=".xlsx,.xls">
+                </div>
+                <textarea id="manualJntInput" placeholder="Manual J&T Entry (Paste Waybill IDs, one per line)"></textarea>
+                <button onclick="submitManualJnt()">Submit J&T Data</button>
+            </div>
+
+            <div class="card">
+                <h2>🔍 Warehouse Scan</h2>
+                <textarea id="scanInput" placeholder="Scan Waybills here..."></textarea>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="submitBulkScan()" style="background: var(--success); flex-grow: 1;">Submit Scans</button>
+                    <button class="btn-secondary" onclick="document.getElementById('scanInput').value=''">Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>⚠️ Missing Returns (In J&T, Not Scanned)</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr><th>Column B</th><th>Column C</th><th>Column E</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="missingTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>❌ Wrong Items (Scanned, Not in J&T Manifest)</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr><th>Waybill ID</th><th>Scan Time</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="wrongTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📈 Trend Analysis</h2>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Daily Summary</h2>
+            <div class="table-container">
+                <table id="summaryTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>J&T Manifest</th>
+                            <th>Warehouse Scanned</th>
+                            <th>Missing Count</th>
+                            <th>Wrong Items</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summaryTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <button class="btn-sync" onclick="syncDataToSheets()">
+            📁 Export Report to Google Sheets
+        </button>
+        
+        <div style="font-size: 13px; font-weight: 500; color: #64748b;">
+            Report Date: 
+            <input type="date" id="reportDateInput" 
+                style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); font-weight: 600; color: var(--primary); font-family: inherit;">
+        </div>
+    </main>
+    
+
+    <script>
+        // CONFIGURATION
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYQSm8OA4TpCJ28gTgSFDncN1n53wQL9qYERd6n9o1WEp-rS-oExSFdnHuw6utHc9O5g/exec';
+        
+        let jntData = []; 
+        let scannedData = []; 
+        let chartInstance = null;
+
+        // Initialize Date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('reportDateDisplay').textContent = today;
+
+        // --- Data Input Handling ---
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = e.target.files;
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const data = new Uint8Array(event.target.result);
+                    const wb = XLSX.read(data, {type: 'array'});
+                    const sheet = wb.Sheets[wb.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(sheet, {header: 1});
+
+                    json.forEach((row, i) => {
+                        if (i === 0 || !row[1]) return;
+                        addJntEntry(row[4] || row[1], row[1], row[2], row[4]);
+                    });
+                    updateUI();
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        });
+
+        function addJntEntry(id, b, c, e) {
+            const sid = id.toString().trim();
+            if (!jntData.some(item => item.id === sid)) {
+                jntData.push({
+                    id: sid,
+                    colB: b || 'N/A',
+                    colC: c || 'N/A',
+                    colE: e || 'N/A',
+                    date: today
+                });
+            }
+        }
+
+        function submitManualJnt() {
+            const val = document.getElementById('manualJntInput').value;
+            val.split('\n').forEach(line => {
+                if (line.trim()) addJntEntry(line.trim(), 'MANUAL', 'N/A', 'MANUAL');
+            });
+            document.getElementById('manualJntInput').value = '';
+            updateUI();
+        }
+
+        function submitBulkScan() {
+            const val = document.getElementById('scanInput').value;
+            const now = new Date();
+            
+            val.split('\n').forEach(line => {
+                const id = line.trim();
+                if (id && !scannedData.some(s => s.id === id)) {
+                    scannedData.push({ id: id, timestamp: now.toLocaleTimeString(), date: today });
+                }
+            });
+            document.getElementById('scanInput').value = '';
+            updateUI();
+        }
+
+        // --- Logic & UI Updates ---
+        function updateUI() {
+            const jntIds = jntData.map(d => d.id);
+            const scanIds = scannedData.map(d => d.id);
+
+            const missing = jntData.filter(d => !scanIds.includes(d.id));
+            const wrong = scannedData.filter(d => !jntIds.includes(d.id));
+
+            document.getElementById('m-totalJnt').textContent = jntData.length;
+            document.getElementById('m-totalScanned').textContent = scannedData.length;
+            document.getElementById('m-totalMissing').textContent = missing.length;
+            document.getElementById('m-totalWrong').textContent = wrong.length;
+
+            // Render Missing Table
+            const mBody = document.getElementById('missingTableBody');
+            mBody.innerHTML = missing.map(d => `
+                <tr>
+                    <td>${d.colB}</td><td>${d.colC}</td><td>${d.colE}</td>
+                    <td><span class="badge badge-missing">MISSING</span></td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" style="text-align:center">All items accounted for!</td></tr>';
+
+            // Render Wrong Table
+            const wBody = document.getElementById('wrongTableBody');
+            wBody.innerHTML = wrong.map(d => `
+                <tr>
+                    <td>${d.id}</td><td>${d.timestamp}</td>
+                    <td><span class="badge badge-wrong">WRONG ITEM</span></td>
+                </tr>
+            `).join('') || '<tr><td colspan="3" style="text-align:center">No mismatches detected.</td></tr>';
+
+            updateSummary(missing.length, wrong.length);
+            renderChart(missing.length, wrong.length);
+        }
+
+        function updateSummary(mCount, wCount) {
+            const sBody = document.getElementById('summaryTableBody');
+            sBody.innerHTML = `
+                <tr>
+                    <td><strong>${today}</strong></td>
+                    <td>${jntData.length}</td>
+                    <td>${scannedData.length}</td>
+                    <td style="color:var(--danger)">${mCount}</td>
+                    <td style="color:var(--wrong)">${wCount}</td>
+                </tr>
+            `;
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['J&T Manifest', 'Warehouse Scans', 'Missing', 'Wrong Items'],
+                    datasets: [{
+                        label: 'Volume',
+                        data: [
+                            jntData.length, 
+                            scannedData.length, 
+                            jntData.filter(d => !scannedData.map(s => s.id).includes(d.id)).length,
+                            scannedData.filter(s => !jntData.map(d => d.id).includes(s.id)).length
+                        ],
+                        backgroundColor: ['#2563eb', '#10b981', '#ef4444', '#991b1b']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // --- Export to Google Sheets ---
+        async function syncDataToSheets() {
+            if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                alert("Please add your Google Apps Script URL to the code first!");
+                return;
+            }
+
+            const jntIds = jntData.map(d => d.id);
+            const wrongItems = scannedData.filter(d => !jntIds.includes(d.id));
+
+            const payload = {
+                action: 'saveAllLogs',
+                data: {
+                    reportDate: today,
+                    jnt: jntData,
+                    scanned: scannedData,
+                    wrong: wrongItems
+                }
+            };
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                alert(`✅ Success! Data for ${today} exported to Google Sheets.`);
+            } catch (error) {
+                console.error('Sync Error:', error);
+                alert("❌ Sync failed. Check console for details.");
+            }
+        }
+
+        // Initial UI Load
+        updateUI();
+        
+    </script>
+</body>
+</html>
