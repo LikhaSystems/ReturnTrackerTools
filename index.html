@@ -3,370 +3,1411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J&T Returns Tracking System Pro</title>
+    <title>J&T Returns Tracking System</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #2563eb;
-            --sidebar-bg: #1e293b;
-            --bg-color: #f1f5f9;
-            --card-bg: #ffffff;
-            --text-main: #334155;
-            --danger: #ef4444; /* Missing */
-            --success: #10b981; /* Matched */
-            --wrong: #991b1b;   /* Wrong Item */
-            --border-color: #e2e8f0;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #ffffff;
+            color: #000000;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
 
-        /* Sidebar */
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
-        .sidebar-header { padding: 24px; font-size: 20px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .sidebar-header span { color: #60a5fa; }
-        .nav-menu { list-style: none; padding: 20px 12px; }
-        .nav-item { padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: 500; }
-        .nav-item.active { background-color: var(--primary); color: white; }
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
 
-        /* Main Content */
-        .main-content { flex-grow: 1; overflow-y: auto; padding: 30px 40px; }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .page-title { font-size: 28px; font-weight: 700; }
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            background-color: #000000;
+            color: #ffffff;
+            padding: 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
 
-        /* Metrics */
-        .metrics-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .metric-box { background: var(--card-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .metric-label { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 8px; }
-        .metric-value { font-size: 32px; font-weight: 700; }
+        .sidebar-header {
+            padding: 30px 25px;
+            border-bottom: 1px solid #333;
+        }
 
-        /* Cards */
-        .card { background: var(--card-bg); border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 1px solid var(--border-color); }
-        .card h2 { font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        textarea { width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 12px; font-family: monospace; resize: vertical; }
-        
-        button { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; background: var(--primary); color: white; transition: 0.2s; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-secondary { background: #e2e8f0; color: var(--text-main); margin-left: 8px; }
-        .btn-sync { background: #059669; display: inline-flex; align-items: center; gap: 8px; }
-        
-        /* Tables */
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 14px; }
-        th { background: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+        }
 
-        /* Badges */
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; color: white; text-transform: uppercase; }
-        .badge-missing { background: var(--danger); }
-        .badge-wrong { background: var(--wrong); }
-        
-        .upload-area { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 30px; text-align: center; background: #f8fafc; cursor: pointer; margin-bottom: 15px; transition: 0.2s; }
-        .upload-area:hover { border-color: var(--primary); background: #f1f5f9; }
-        .chart-container { height: 350px; }
-        
-        #reportDateDisplay { font-weight: 700; color: var(--primary); }
-    </style>
-</head>
-<body>
+        .sidebar-header p {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-    <aside class="sidebar">
-        <div class="sidebar-header">Likha <span>Tools </span></div>
-        <ul class="nav-menu">
-            <li class="nav-item active">📊 Return Tally</li>
-        </ul>
-    </aside>
+        .nav-tabs {
+            padding: 20px 0;
+        }
 
-    <main class="main-content">
-       <div class="header-flex">
-    <h1 class="page-title">Returns Tracking Dashboard</h1>
-    
-</div>
+        .nav-tab {
+            padding: 18px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-        <div class="metrics-container">
-            <div class="metric-box">
-                <div class="metric-label">Total J&T Returns</div>
-                <div class="metric-value" id="m-totalJnt" style="color: var(--primary)">0</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-label">Warehouse Scanned</div>
-                <div class="metric-value" id="m-totalScanned">0</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-label">⚠️ Missing</div>
-                <div class="metric-value" id="m-totalMissing" style="color: var(--danger)">0</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-label">❌ Wrong Items</div>
-                <div class="metric-value" id="m-totalWrong" style="color: var(--wrong)">0</div>
-            </div>
-        </div>
+        .nav-tab:hover {
+            background-color: #1a1a1a;
+        }
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-            <div class="card">
-                <h2>📥 J&T Returns Input</h2>
-                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-                    <p><strong>Click to Upload Excel Manifest</strong></p>
-                    <p style="font-size: 12px; color: #64748b;">(Columns B, C, E supported)</p>
-                    <input type="file" id="fileInput" hidden multiple accept=".xlsx,.xls">
-                </div>
-                <textarea id="manualJntInput" placeholder="Manual J&T Entry (Paste Waybill IDs, one per line)"></textarea>
-                <button onclick="submitManualJnt()">Submit J&T Data</button>
-            </div>
+        .nav-tab.active {
+            background-color: #ffffff;
+            color: #000000;
+            border-left-color: #000000;
+            font-weight: 600;
+        }
 
-            <div class="card">
-                <h2>🔍 Warehouse Scan</h2>
-                <textarea id="scanInput" placeholder="Scan Waybills here..."></textarea>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="submitBulkScan()" style="background: var(--success); flex-grow: 1;">Submit Scans</button>
-                    <button class="btn-secondary" onclick="document.getElementById('scanInput').value=''">Clear</button>
-                </div>
-            </div>
-        </div>
+        .nav-tab .tab-icon {
+            font-size: 18px;
+        }
 
-        <div class="card">
-            <h2>⚠️ Missing Returns (In J&T, Not Scanned)</h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr><th>Column B</th><th>Column C</th><th>Column E</th><th>Status</th></tr>
-                    </thead>
-                    <tbody id="missingTableBody"></tbody>
-                </table>
-            </div>
-        </div>
+        /* Main Content Styles */
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 40px;
+            max-width: calc(100% - 280px);
+        }
 
-        <div class="card">
-            <h2>❌ Wrong Items (Scanned, Not in J&T Manifest)</h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr><th>Waybill ID</th><th>Scan Time</th><th>Status</th></tr>
-                    </thead>
-                    <tbody id="wrongTableBody"></tbody>
-                </table>
-            </div>
-        </div>
+        .page-header {
+            margin-bottom: 40px;
+        }
 
-        <div class="card">
-            <h2>📈 Trend Analysis</h2>
-            <div class="chart-container">
-                <canvas id="mainChart"></canvas>
-            </div>
-        </div>
+        .page-header h2 {
+            font-size: 32px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
 
-        <div class="card">
-            <h2>📋 Daily Summary</h2>
-            <div class="table-container">
-                <table id="summaryTable">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>J&T Manifest</th>
-                            <th>Warehouse Scanned</th>
-                            <th>Missing Count</th>
-                            <th>Wrong Items</th>
-                        </tr>
-                    </thead>
-                    <tbody id="summaryTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-        <button class="btn-sync" onclick="syncDataToSheets()">
-            📁 Export Report to Google Sheets
-        </button>
-        
-        <div style="font-size: 13px; font-weight: 500; color: #64748b;">
-            Report Date: 
-            <input type="date" id="reportDateInput" 
-                style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); font-weight: 600; color: var(--primary); font-family: inherit;">
-        </div>
-    </main>
-    
+        .page-header p {
+            font-size: 14px;
+            color: #666;
+            font-weight: 400;
+        }
 
-<script>
-        // CONFIGURATION
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYQSm8OA4TpCJ28gTgSFDncN1n53wQL9qYERd6n9o1WEp-rS-oExSFdnHuw6utHc9O5g/exec';
-        
-        let jntData = []; 
-        let scannedData = []; 
-        let chartInstance = null;
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
 
-        // Initialize Date Input to Today
-        const dateInput = document.getElementById('reportDateInput');
-        dateInput.value = new Date().toISOString().split('T')[0];
-        
-        // Refresh UI if date changes manually
-        dateInput.addEventListener('change', updateUI);
+        .tab-content.active {
+            display: block;
+        }
 
-        // --- Data Input Handling ---
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const files = e.target.files;
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const data = new Uint8Array(event.target.result);
-                    const wb = XLSX.read(data, {type: 'array'});
-                    const sheet = wb.Sheets[wb.SheetNames[0]];
-                    const json = XLSX.utils.sheet_to_json(sheet, {header: 1});
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-                    json.forEach((row, i) => {
-                        if (i === 0 || !row[1]) return;
-                        addJntEntry(row[4] || row[1], row[1], row[2], row[4]);
-                    });
-                    updateUI();
-                };
-                reader.readAsArrayBuffer(file);
-            });
-        });
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
 
-        function addJntEntry(id, b, c, e) {
-            const sid = id.toString().trim();
-            if (!jntData.some(item => item.id === sid)) {
-                jntData.push({
-                    id: sid,
-                    colB: b || 'N/A',
-                    colC: c || 'N/A',
-                    colE: e || 'N/A'
-                });
+        .metric-card {
+            border: 3px solid #000000;
+            padding: 35px 30px;
+            background-color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-card.highlighted {
+            background-color: #ff4444;
+            color: #ffffff;
+        }
+
+        .metric-card.highlighted .metric-label {
+            color: #ffffff;
+        }
+
+        .metric-value {
+            font-size: 72px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        /* Section Styles */
+        .section {
+            border: 3px solid #000000;
+            background-color: #ffffff;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background-color: #000000;
+            color: #ffffff;
+            padding: 20px 30px;
+        }
+
+        .section-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+        }
+
+        .section-body {
+            padding: 30px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #000000;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 15px 20px;
+            border: 3px solid #000000;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            background-color: #ffffff;
+            color: #000000;
+            transition: all 0.3s ease;
+            resize: vertical;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            background-color: #f8f8f8;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+        }
+
+        textarea {
+            min-height: 200px;
+        }
+
+        .btn {
+            padding: 15px 35px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background-color: #ffffff;
+            border: 3px solid #000000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background-color: #000000;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-sm {
+            padding: 10px 20px;
+            font-size: 11px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 3px dashed #000000;
+            padding: 50px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        .upload-area:hover {
+            background-color: #f0f0f0;
+            border-color: #000000;
+        }
+
+        .upload-area.dragover {
+            background-color: #e0e0e0;
+            border-color: #000000;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .upload-label {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 20px;
+            list-style: none;
+        }
+
+        .file-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-list li:before {
+            content: '📄';
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #000000;
+            color: #ffffff;
+            padding: 15px 20px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 12px;
+        }
+
+        td {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            color: #000000;
+        }
+
+        tr:hover td {
+            background-color: #f8f8f8;
+        }
+
+        tr.missing-row td {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        tr.wrong-item-row td {
+            background-color: #ff4444;
+            color: #ffffff;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            height: 450px;
+            padding: 20px;
+            border: 3px solid #000000;
+            background-color: #ffffff;
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 20px 25px;
+            margin-top: 20px;
+            border: 3px solid #000000;
+            display: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .status-message.success {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        .status-message.error {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #000000;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 3px solid #000000;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+            .main-content {
+                margin-left: 240px;
+                max-width: calc(100% - 240px);
             }
         }
 
-        function submitManualJnt() {
-            const val = document.getElementById('manualJntInput').value;
-            val.split('\n').forEach(line => {
-                if (line.trim()) addJntEntry(line.trim(), 'MANUAL', 'N/A', 'MANUAL');
-            });
-            document.getElementById('manualJntInput').value = '';
-            updateUI();
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+                max-width: 100%;
+                padding: 20px;
+            }
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            .nav-tab {
+                padding: 15px 20px;
+            }
+            .page-header h2 {
+                font-size: 24px;
+            }
         }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>J&T Returns</h1>
+                <p>Tracking System</p>
+            </div>
+            <div class="nav-tabs">
+                <div class="nav-tab active" data-tab="dashboard">
+                    <span class="tab-icon">📊</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-tab" data-tab="upload">
+                    <span class="tab-icon">📤</span>
+                    <span>Upload Files</span>
+                </div>
+                <div class="nav-tab" data-tab="scan">
+                    <span class="tab-icon">🔍</span>
+                    <span>Warehouse Scan</span>
+                </div>
+                <div class="nav-tab" data-tab="missing">
+                    <span class="tab-icon">⚠️</span>
+                    <span>Missing Returns</span>
+                </div>
+                <div class="nav-tab" data-tab="wrong">
+                    <span class="tab-icon">❌</span>
+                    <span>Wrong Items</span>
+                </div>
+                <div class="nav-tab" data-tab="analytics">
+                    <span class="tab-icon">📈</span>
+                    <span>Analytics</span>
+                </div>
+            </div>
+        </div>
 
-        function submitBulkScan() {
-            const val = document.getElementById('scanInput').value;
-            const now = new Date();
-            
-            val.split('\n').forEach(line => {
-                const id = line.trim();
-                if (id && !scannedData.some(s => s.id === id)) {
-                    scannedData.push({ id: id, timestamp: now.toLocaleTimeString() });
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard">
+                <div class="page-header">
+                    <h2>Dashboard Overview</h2>
+                    <p>Real-time return tracking metrics</p>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value" id="totalJnt">0</div>
+                        <div class="metric-label">Total J&T Returns</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="totalScanned">0</div>
+                        <div class="metric-label">Total Warehouse Scanned</div>
+                    </div>
+                    <div class="metric-card highlighted" id="missingCard">
+                        <div class="metric-value" id="totalMissing">0</div>
+                        <div class="metric-label">Total Missing</div>
+                    </div>
+                    <div class="metric-card highlighted" id="wrongItemsCard">
+                        <div class="metric-value" id="totalWrongItems">0</div>
+                        <div class="metric-label">Wrong Items</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h3>Recent Activity</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <h4>No Recent Activity</h4>
+                            <p>Upload Excel files or scan returns to see activity</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Tab -->
+            <div class="tab-content" id="upload">
+                <div class="page-header">
+                    <h2>Upload Excel Files</h2>
+                    <p>Import J&T returns data from Excel spreadsheets</p>
+                </div>
+
+                <div class="section">
+                    <div class="section-body">
+                        <div class="form-group">
+                            <label>Date Filter (Optional)</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" id="dateFilter" placeholder="YYYY-MM-DD (e.g., 2026-04-09)" style="flex: 1;">
+                                <button class="btn btn-sm" onclick="clearDateFilter()">Clear</button>
+                            </div>
+                        </div>
+
+                        <div class="upload-area" id="uploadArea">
+                            <label class="upload-label">
+                                Select Excel Files
+                                <input type="file" id="fileInput" multiple accept=".xlsx,.xls">
+                            </label>
+                            <p class="upload-hint">Drop files here or click to select</p>
+                            <ul class="file-list" id="fileList"></ul>
+                        </div>
+
+                        <div id="uploadStatus" class="status-message"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scan Tab -->
+            <div class="tab-content" id="scan">
+                <div class="page-header">
+                    <h2>Warehouse Scan</h2>
+                    <p>Scan and verify returns in the warehouse</p>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h3>Scan Input</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="form-group">
+                            <label>Return Numbers</label>
+                            <textarea id="scanInput" placeholder="Paste or scan return numbers (one per line)" autocomplete="off"></textarea>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn" onclick="submitBulkScan()">Submit All Scans</button>
+                            <button class="btn" onclick="clearScanInput()">Clear</button>
+                        </div>
+                        <div id="scanStatus" class="status-message"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Missing Tab -->
+            <div class="tab-content" id="missing">
+                <div class="page-header">
+                    <h2>Missing Returns</h2>
+                    <p>Returns that have not been scanned in the warehouse</p>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h3>Missing Returns List</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="table-container">
+                            <table id="missingTable">
+                                <thead>
+                                    <tr>
+                                        <th>Column B Data</th>
+                                        <th>Column C Data</th>
+                                        <th>Column E Data</th>
+                                                                                <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="missingTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wrong Items Tab -->
+            <div class="tab-content" id="wrong">
+                <div class="page-header">
+                    <h2>Wrong Items</h2>
+                    <p>Warehouse scanned items that don't exist in J&T returns</p>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h3>Wrong Items List</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="table-container">
+                            <table id="wrongItemsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Scanned ID</th>
+                                        <th>Scan Timestamp</th>
+                                        <th>Scan Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wrongItemsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div class="tab-content" id="analytics">
+                <div class="page-header">
+                    <h2>Analytics & Reports</h2>
+                    <p>Detailed analysis and trends</p>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h3>Returns by Date - Area Chart</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="chart-container">
+                            <canvas id="areaChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h3>Data Summary</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="table-container">
+                            <table id="summaryTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>J&T Returns</th>
+                                        <th>Scanned Returns</th>
+                                        <th>Missing Returns</th>
+                                        <th>Wrong Items</th>
+                                        <th>Match Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="summaryTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>J&T Returns Tracking System • All Rights Reserved</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Google Apps Script Web App URL - Replace with your deployed URL
+        const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+
+        // Data storage
+        let jntUploads = [];
+        let warehouseScanned = [];
+        let filteredJntUploads = [];
+        let areaChart = null;
+
+        // Tab Navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+                switchTab(tabName);
+            });
+        });
+
+        function switchTab(tabName) {
+            // Update nav tabs
+            document.querySelectorAll('.nav-tab').forEach(t => {
+                t.classList.remove('active');
+                if (t.getAttribute('data-tab') === tabName) {
+                    t.classList.add('active');
                 }
             });
-            document.getElementById('scanInput').value = '';
-            updateUI();
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+                if (content.id === tabName) {
+                    content.classList.add('active');
+                }
+            });
+
+            // Update display when switching tabs
+            updateDisplay();
         }
 
-        // --- Logic & UI Updates ---
-        function updateUI() {
-            const jntIds = jntData.map(d => d.id);
-            const scanIds = scannedData.map(d => d.id);
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileList = document.getElementById('fileList');
 
-            const missing = jntData.filter(d => !scanIds.includes(d.id));
-            const wrong = scannedData.filter(d => !jntIds.includes(d.id));
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
 
-            document.getElementById('m-totalJnt').textContent = jntData.length;
-            document.getElementById('m-totalScanned').textContent = scannedData.length;
-            document.getElementById('m-totalMissing').textContent = missing.length;
-            document.getElementById('m-totalWrong').textContent = wrong.length;
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
 
-            const mBody = document.getElementById('missingTableBody');
-            mBody.innerHTML = missing.map(d => `
-                <tr>
-                    <td>${d.colB}</td><td>${d.colC}</td><td>${d.colE}</td>
-                    <td><span class="badge badge-missing">MISSING</span></td>
-                </tr>
-            `).join('') || '<tr><td colspan="4" style="text-align:center">All items accounted for!</td></tr>';
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
 
-            const wBody = document.getElementById('wrongTableBody');
-            wBody.innerHTML = wrong.map(d => `
-                <tr>
-                    <td>${d.id}</td><td>${d.timestamp}</td>
-                    <td><span class="badge badge-wrong">WRONG ITEM</span></td>
-                </tr>
-            `).join('') || '<tr><td colspan="3" style="text-align:center">No mismatches detected.</td></tr>';
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
 
-            updateSummary(missing.length, wrong.length);
-            renderChart();
+        function handleFiles(files) {
+            fileList.innerHTML = '';
+            if (files.length === 0) return;
+
+            Array.from(files).forEach(file => {
+                const li = document.createElement('li');
+                li.textContent = file.name;
+                fileList.appendChild(li);
+            });
+
+            processExcelFiles(files);
         }
 
-        function updateSummary(mCount, wCount) {
-            const sBody = document.getElementById('summaryTableBody');
-            const selectedDate = document.getElementById('reportDateInput').value;
-            sBody.innerHTML = `
-                <tr>
-                    <td><strong>${selectedDate}</strong></td>
-                    <td>${jntData.length}</td>
-                    <td>${scannedData.length}</td>
-                    <td style="color:var(--danger)">${mCount}</td>
-                    <td style="color:var(--wrong)">${wCount}</td>
-                </tr>
-            `;
-        }
+        function processExcelFiles(files) {
+            jntUploads = [];
+            let processedCount = 0;
 
-        function renderChart() {
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-            
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['J&T Manifest', 'Warehouse Scans', 'Missing', 'Wrong Items'],
-                    datasets: [{
-                        label: 'Volume',
-                        data: [
-                            jntData.length, 
-                            scannedData.length, 
-                            jntData.filter(d => !scannedData.map(s => s.id).includes(d.id)).length,
-                            scannedData.filter(s => !jntData.map(d => d.id).includes(s.id)).length
-                        ],
-                        backgroundColor: ['#2563eb', '#10b981', '#ef4444', '#991b1b']
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    workbook.SheetNames.forEach(sheetName => {
+                        const worksheet = workbook.Sheets[sheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                        jsonData.forEach((row, index) => {
+                            if (index === 0) return;
+
+                            const returnId = row[4] || row[1] || generateId();
+                            const colB = row[1] || '';
+                            const colC = row[2] || '';
+                            let colE = row[4] || '';
+
+                            if (colE) {
+                                const dateObj = new Date(colE);
+                                if (!isNaN(dateObj)) {
+                                    colE = formatDate(dateObj);
+                                } else {
+                                    const dateMatch = colE.toString().match(/(\d{4}-\d{2}-\d{2})/);
+                                    if (dateMatch) {
+                                        colE = dateMatch[1];
+                                    } else {
+                                        colE = colE.toString().trim();
+                                    }
+                                }
+                            }
+
+                            const date = formatDate(new Date());
+
+                            if (returnId) {
+                                jntUploads.push({
+                                    id: returnId.toString().trim(),
+                                    colB: colB ? colB.toString().trim() : '',
+                                    colC: colC ? colC.toString().trim() : '',
+                                    colE: colE,
+                                    date: date
+                                });
+                            }
+                        });
+                    });
+
+                    processedCount++;
+
+                    if (processedCount === files.length) {
+                        removeDuplicates();
+                        updateDisplay();
+                        saveUploadDataToSheets();
+                        showStatus('uploadStatus', 'Excel files processed successfully!', 'success');
+                    }
+                };
+
+                reader.readAsArrayBuffer(file);
             });
         }
 
-        // --- Export to Google Sheets ---
-        async function syncDataToSheets() {
-    if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_GOOGLE')) {
-        alert("Please check your Google Apps Script URL.");
-        return;
-    }
+        function removeDuplicates() {
+            const seen = new Set();
+            jntUploads = jntUploads.filter(item => {
+                const duplicate = seen.has(item.id);
+                seen.add(item.id);
+                return !duplicate;
+            });
+        }
 
-    const selectedDate = document.getElementById('reportDateInput').value;
-    const jntIds = jntData.map(d => d.id);
-    const wrongItems = scannedData.filter(d => !jntIds.includes(d.id));
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
 
-    const payload = {
-        action: 'saveAllLogs',
-        reportDate: selectedDate,
-        jnt: jntData,
-        scanned: scannedData,
-        wrong: wrongItems
-    };
+        function generateId() {
+            return 'RET-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
 
-    try {
-        // We use the regular fetch. 
-        // Note: Google Apps Script will always return a CORS error on POST 
-        // even if it succeeds, unless you handle the response as JSONP or similar.
-        // However, the data WILL reach the sheet.
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
+        // Scan input handling
+        const scanInput = document.getElementById('scanInput');
+
+        function submitBulkScan() {
+            const scanText = scanInput.value.trim();
+
+            if (!scanText) {
+                showStatus('scanStatus', 'Please enter or scan return numbers', 'error');
+                return;
+            }
+
+            const scanLines = scanText.split('\n').map(line => line.trim()).filter(line => line !== '');
+
+            if (scanLines.length === 0) {
+                showStatus('scanStatus', 'No valid return numbers found', 'error');
+                return;
+            }
+
+            let addedCount = 0;
+            let duplicateCount = 0;
+            const currentDateTime = new Date().toISOString();
+            const currentDate = formatDate(new Date());
+
+            scanLines.forEach(scanValue => {
+                const alreadyScanned = warehouseScanned.some(item => item.id === scanValue);
+
+                if (alreadyScanned) {
+                    duplicateCount++;
+                } else {
+                    const scanData = {
+                        id: scanValue,
+                        timestamp: currentDateTime,
+                        date: currentDate
+                    };
+                    warehouseScanned.push(scanData);
+                    addedCount++;
+                }
+            });
+
+            updateDisplay();
+            saveScannedDataToSheets();
+            scanInput.value = '';
+
+            let message = `Successfully added ${addedCount} return(s)`;
+            if (duplicateCount > 0) {
+                message += `. ${duplicateCount} duplicate(s) skipped.`;
+            }
+            showStatus('scanStatus', message, addedCount > 0 ? 'success' : 'error');
+        }
+
+        function clearScanInput() {
+            if (scanInput.value.trim()) {
+                if (confirm('Are you sure you want to clear all scanned data?')) {
+                    scanInput.value = '';
+                    showStatus('scanStatus', 'Scan input cleared', 'success');
+                }
+            } else {
+                showStatus('scanStatus', '', '');
+            }
+        }
+
+        function updateDisplay() {
+            applyDateFilter();
+            updateMetrics();
+            updateMissingTable();
+            updateWrongItemsTable();
+            updateAreaChart();
+            updateSummaryTable();
+        }
+
+        function applyDateFilter() {
+            const dateFilterValue = document.getElementById('dateFilter').value.trim();
+
+            if (dateFilterValue) {
+                const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                if (!dateRegex.test(dateFilterValue)) {
+                    showStatus('uploadStatus', 'Invalid date format. Please use YYYY-MM-DD (e.g., 2026-04-09)', 'error');
+                    filteredJntUploads = [...jntUploads];
+                    return;
+                }
+
+                filteredJntUploads = jntUploads.filter(item => {
+                    const matchDate = item.date === dateFilterValue;
+                    const matchColE = item.colE === dateFilterValue;
+                    return matchDate || matchColE;
+                });
+
+                if (filteredJntUploads.length === 0) {
+                    showStatus('uploadStatus', 'No records found for date: ' + dateFilterValue, 'error');
+                } else {
+                    showStatus('uploadStatus', `Found ${filteredJntUploads.length} records for date: ${dateFilterValue}`, 'success');
+                }
+            } else {
+                filteredJntUploads = [...jntUploads];
+                showStatus('uploadStatus', 'Date filter cleared. Showing all data.', 'success');
+            }
+        }
+
+        function clearDateFilter() {
+            document.getElementById('dateFilter').value = '';
+            filteredJntUploads = [...jntUploads];
+            updateDisplay();
+            showStatus('uploadStatus', 'Date filter cleared. Showing all ' + jntUploads.length + ' records.', 'success');
+        }
+
+        function updateMetrics() {
+            const totalJnt = filteredJntUploads.length;
+            const totalScanned = warehouseScanned.length;
+            const missingReturns = calculateMissing();
+            const wrongItems = calculateWrongItems();
+            const totalMissing = missingReturns.length;
+            const totalWrongItems = wrongItems.length;
+
+            const jntIds = new Set(filteredJntUploads.map(item => item.id));
+            const scannedIds = new Set(warehouseScanned.map(item => item.id));
+            const matchedCount = filteredJntUploads.filter(item => scannedIds.has(item.id)).length;
+
+            document.getElementById('totalJnt').textContent = totalJnt;
+            document.getElementById('totalScanned').textContent = totalScanned;
+            document.getElementById('totalMissing').textContent = totalMissing;
+            document.getElementById('totalWrongItems').textContent = totalWrongItems;
+
+            // Update missing card
+            const missingCard = document.getElementById('missingCard');
+            if (totalMissing > 0) {
+                missingCard.classList.add('highlighted');
+            } else {
+                missingCard.classList.remove('highlighted');
+            }
+
+            // Update wrong items card
+            const wrongItemsCard = document.getElementById('wrongItemsCard');
+            if (totalWrongItems > 0) {
+                wrongItemsCard.classList.add('highlighted');
+            } else {
+                wrongItemsCard.classList.remove('highlighted');
+            }
+        }
+
+        function calculateMissing() {
+            const scannedIds = new Set(warehouseScanned.map(item => item.id));
+            const missing = filteredJntUploads.filter(item => !scannedIds.has(item.id));
+            return missing;
+        }
+
+        function calculateWrongItems() {
+            const jntIds = new Set(filteredJntUploads.map(item => item.id));
+            const wrongItems = warehouseScanned.filter(item => !jntIds.has(item.id));
+            return wrongItems;
+        }
+
+        function updateMissingTable() {
+            const missingReturns = calculateMissing();
+            const tbody = document.getElementById('missingTableBody');
+
+            if (missingReturns.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No missing returns</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = missingReturns.map(item => `
+                <tr class="missing-row">
+                    <td>${item.colB}</td>
+                    <td>${item.colC}</td>
+                    <td>${item.colE}</td>
+                    <td>MISSING</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateWrongItemsTable() {
+            const wrongItems = calculateWrongItems();
+            const tbody = document.getElementById('wrongItemsTableBody');
+
+            if (wrongItems.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No wrong items</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = wrongItems.map(item => `
+                <tr class="wrong-item-row">
+                    <td>${item.id}</td>
+                    <td>${new Date(item.timestamp).toLocaleString()}</td>
+                    <td>${item.date}</td>
+                    <td>WRONG ITEM</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateAreaChart() {
+            const ctx = document.getElementById('areaChart').getContext('2d');
+
+            const jntByDate = {};
+            const scannedByDate = {};
+            const wrongByDate = {};
+
+            filteredJntUploads.forEach(item => {
+                if (!jntByDate[item.date]) jntByDate[item.date] = 0;
+                jntByDate[item.date]++;
+            });
+
+            warehouseScanned.forEach(item => {
+                if (!scannedByDate[item.date]) scannedByDate[item.date] = 0;
+                scannedByDate[item.date]++;
+            });
+
+            const jntIds = new Set(filteredJntUploads.map(item => item.id));
+            warehouseScanned.forEach(item => {
+                if (!jntIds.has(item.id) && !wrongByDate[item.date]) {
+                    if (!wrongByDate[item.date]) wrongByDate[item.date] = 0;
+                    wrongByDate[item.date]++;
+                }
+            });
+
+            const allDates = [...new Set([
+                ...Object.keys(jntByDate),
+                ...Object.keys(scannedByDate),
+                ...Object.keys(wrongByDate)
+            ])].sort();
+
+            const accumulatedJnt = [];
+            const accumulatedScanned = [];
+            const accumulatedWrong = [];
+            const accumulatedMissing = [];
+
+            let totalJnt = 0;
+            let totalScanned = 0;
+            let totalWrong = 0;
+
+            allDates.forEach(date => {
+                totalJnt += (jntByDate[date] || 0);
+                totalScanned += (scannedByDate[date] || 0);
+                totalWrong += (wrongByDate[date] || 0);
+
+                accumulatedJnt.push(totalJnt);
+                accumulatedScanned.push(totalScanned);
+                accumulatedWrong.push(totalWrong);
+                accumulatedMissing.push(totalJnt - (totalScanned - totalWrong));
+            });
+
+            if (areaChart) {
+                areaChart.destroy();
+            }
+
+            areaChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: allDates,
+                    datasets: [
+                        {
+                            label: 'J&T Returns',
+                            data: accumulatedJnt,
+                            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                            borderColor: '#000000',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#000000',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5
+                        },
+                        {
+                            label: 'Scanned Returns',
+                            data: accumulatedScanned,
+                            backgroundColor: 'rgba(128, 128, 128, 0.1)',
+                            borderColor: '#808080',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#808080',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5
+                        },
+                        {
+                            label: 'Wrong Items',
+                            data: accumulatedWrong,
+                            backgroundColor: 'rgba(255, 68, 68, 0.2)',
+                            borderColor: '#ff4444',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#ff4444',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5
+                        },
+                        {
+                            label: 'Missing Returns',
+                            data: accumulatedMissing,
+                            backgroundColor: 'rgba(0, 0, 0, 0.15)',
+                            borderColor: '#000000',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#000000',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#e0e0e0',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#000000',
+                                font: {
+                                    family: 'JetBrains Mono'
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: '#e0e0e0',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#000000',
+                                font: {
+                                    family: 'JetBrains Mono'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#000000',
+                                font: {
+                                    family: 'JetBrains Mono',
+                                    size:                                    12,
+                                    weight: '600'
+                                },
+                                usePointStyle: true,
+                                boxWidth: 8
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#000000',
+                            titleFont: {
+                                family: 'JetBrains Mono'
+                            },
+                            bodyFont: {
+                                family: 'JetBrains Mono'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateSummaryTable() {
+            const tbody = document.getElementById('summaryTableBody');
+            const jntByDate = {};
+            const scannedByDate = {};
+            const wrongByDate = {};
+
+            filteredJntUploads.forEach(item => {
+                if (!jntByDate[item.date]) {
+                    jntByDate[item.date] = [];
+                }
+                jntByDate[item.date].push(item.id);
+            });
+
+            warehouseScanned.forEach(item => {
+                if (!scannedByDate[item.date]) {
+                    scannedByDate[item.date] = [];
+                }
+                scannedByDate[item.date].push(item.id);
+            });
+
+            const jntIds = new Set(filteredJntUploads.map(item => item.id));
+            warehouseScanned.forEach(item => {
+                if (!jntIds.has(item.id)) {
+                    if (!wrongByDate[item.date]) {
+                        wrongByDate[item.date] = [];
+                    }
+                    wrongByDate[item.date].push(item.id);
+                }
+            });
+
+            const allDates = [...new Set([
+                ...Object.keys(jntByDate),
+                ...Object.keys(scannedByDate),
+                ...Object.keys(wrongByDate)
+            ])].sort().reverse();
+
+            if (allDates.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No data available</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = allDates.map(date => {
+                const jntCount = jntByDate[date] ? jntByDate[date].length : 0;
+                const scannedCount = scannedByDate[date] ? scannedByDate[date].length : 0;
+                const wrongCount = wrongByDate[date] ? wrongByDate[date].length : 0;
+                const validScannedCount = scannedCount - wrongCount;
+                const missingCount = jntCount - validScannedCount;
+                const matchRate = jntCount > 0 ? ((validScannedCount / jntCount) * 100).toFixed(1) : '0.0';
+
+                return `
+                    <tr>
+                        <td>${date}</td>
+                        <td>${jntCount}</td>
+                        <td>${scannedCount}</td>
+                        <td>${missingCount > 0 ? missingCount : '0'}</td>
+                        <td>${wrongCount}</td>
+                        <td>${matchRate}%</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            if (message) {
+                element.textContent = message;
+                element.className = 'status-message show ' + type;
+            } else {
+                element.className = 'status-message';
+            }
+        }
+
+        // Google Sheets Integration Functions
+        async function saveUploadDataToSheets() {
+            if (jntUploads.length === 0) return;
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'saveUploadData',
+                        data: jntUploads
+                    })
+                });
+
+                console.log('Upload data saved to Google Sheets');
+            } catch (error) {
+                console.error('Error saving upload data:', error);
+            }
+        }
+
+        async function saveScannedDataToSheets() {
+            if (warehouseScanned.length === 0) return;
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'saveScannedData',
+                        data: warehouseScanned
+                    })
+                });
+
+                console.log('Scanned data saved to Google Sheets');
+            } catch (error) {
+                console.error('Error saving scanned data:', error);
+            }
+        }
+
+        async function loadAllDataFromSheets() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getAllData`);
+                const data = await response.json();
+
+                if (data.jntUploads) {
+                    jntUploads = data.jntUploads;
+                }
+
+                if (data.warehouseScanned) {
+                    warehouseScanned = data.warehouseScanned;
+                }
+
+                updateDisplay();
+                console.log('Data loaded from Google Sheets');
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            filteredJntUploads = [...jntUploads];
+
+            const dateFilter = document.getElementById('dateFilter');
+            if (dateFilter) {
+                dateFilter.addEventListener('change', () => {
+                    applyDateFilter();
+                    updateDisplay();
+                });
+
+                dateFilter.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        applyDateFilter();
+                        updateDisplay();
+                    }
+                });
+            }
+
+            updateDisplay();
+
+            if (SCRIPT_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                loadAllDataFromSheets();
+            }
         });
-        
-        alert(`✅ Sync Triggered! Please check your Google Sheet for ${selectedDate}.`);
-    } catch (error) {
-        console.error('Sync Error:', error);
-        alert("❌ Sync failed. Check console.");
-    }
-}
-
-        // Initial UI Load
-        updateUI();
     </script>
 </body>
 </html>
